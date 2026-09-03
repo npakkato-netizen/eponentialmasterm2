@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Prompt', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* KaTeX custom typography overrides for crisp mathematical rendering */
+.katex {
+  font-size: 0.95em !important;
+  text-rendering: auto;
+}
+
+.katex .mord.text {
+  font-family: 'Prompt', 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.katex-display {
+  margin: 0.5em 0 !important;
+  overflow-x: visible;
+  overflow-y: visible;
+  padding: 0.25em 0;
+}
+
+.katex-html {
+  overflow: visible !important;
+}
+
+/* Hide scrollbars across modern browsers while allowing fluid expansion */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* KaTeX fraction spacing & denominator exponent clearance */
+.katex .mfrac {
+  vertical-align: middle;
+  padding: 0.12em 0.05em;
+}
+
+/* Fraction bar styling - clean, crisp line with proper spacing */
+.katex .frac-line {
+  border-bottom-style: solid;
+  border-bottom-width: 0.055em !important;
+  display: block;
+}
+
+/* Prevent denominator superscripts from touching or overlapping the fraction bar */
+.katex .mfrac .vlist-t2 {
+  margin-right: 0 !important;
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Exponential Master ม.1-ม.2 (KruNiracha)",
+  "description": "แอปพลิเคชันเรียนรู้และฝึกฝนสมบัติเลขยกกำลังสำหรับ ม.1 และ ม.2 โดย ครูนิรชา (KruNiracha) พร้อมแบบฝึกหัดโต้ตอบ เฉลยละเอียด ระบบวิเคราะห์จุดอ่อน โหมดดวลแข่งขัน และจัดอันดับ",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

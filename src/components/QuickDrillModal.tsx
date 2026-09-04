@@ -170,13 +170,40 @@ export const QuickDrillModal: React.FC<QuickDrillModalProps> = ({
 
     // Give completion bonus for finishing all 15 questions
     const completionBonus = 100;
-    setTotalXpEarned((prev) => prev + completionBonus);
+    const finalXp = totalXpEarned + completionBonus;
+    setTotalXpEarned(finalXp);
 
     confetti({
       particleCount: 100,
       spread: 80,
       origin: { y: 0.6 },
     });
+
+    // ส่งคะแนนชุด 15 ข้อไปยัง Google Sheets อัตโนมัติ
+    const studentProfile = sheetService.getStudentProfile();
+    if (studentProfile) {
+      const currentSet = STANDARD_EXAM_SETS_15.find((s) => s.id === selectedSetId);
+      const totalQ = questions.length;
+      const cCount = results.filter((r) => r.isCorrect).length;
+      const accuracy = totalQ > 0 ? (cCount / totalQ) * 100 : 0;
+      const spentMinutes = Math.floor(totalTimeSpent / 60);
+      const spentSeconds = totalTimeSpent % 60;
+      const timeFormatted = `${spentMinutes}:${spentSeconds < 10 ? "0" : ""}${spentSeconds} นาที`;
+
+      sheetService.submitQuizScore({
+        studentName: studentProfile.name,
+        grade: studentProfile.grade,
+        studentNo: studentProfile.studentNo,
+        topicTitle: currentSet?.title || `ชุดข้อสอบ 15 ข้อ (${selectedSetId})`,
+        score: cCount,
+        totalQuestions: totalQ,
+        percentage: accuracy,
+        xpEarned: finalXp,
+        timeSpentSeconds: totalTimeSpent,
+        mode: "drill",
+        note: `จบชุดทดสอบ Speed Drill 15 ข้อในเวลา ${timeFormatted} ได้ ${cCount}/${totalQ} ข้อ (+${finalXp} XP)`,
+      });
+    }
   };
 
   const handleShareDrill = () => {
@@ -261,30 +288,52 @@ export const QuickDrillModal: React.FC<QuickDrillModalProps> = ({
           </div>
         </div>
 
-        {/* Set Switcher Bar */}
+        {/* Set Switcher Bar - Multi-Line Layout */}
         {!isCompleted && (
-          <div className="px-4 sm:px-6 py-2.5 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2 overflow-x-auto text-xs">
-            <span className="text-slate-500 font-bold whitespace-nowrap hidden sm:inline">เลือกชุด 15 ข้อ:</span>
-            {STANDARD_EXAM_SETS_15.map((set) => {
-              const isCurrent = set.id === selectedSetId;
-              return (
-                <button
-                  key={set.id}
-                  onClick={() => {
-                    setSelectedSetId(set.id);
-                    initDrill(set.id);
-                  }}
-                  className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                    isCurrent
-                      ? "bg-indigo-600 text-white shadow-xs"
-                      : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-                  }`}
-                >
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>{set.badge} (15 ข้อ)</span>
-                </button>
-              );
-            })}
+          <div className="px-4 sm:px-6 py-3 bg-slate-100/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 text-xs">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-slate-700 dark:text-slate-200 font-extrabold flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                เลือกชุดข้อสอบ (15 ข้อต่อชุด):
+              </span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                ชุดปัจจุบัน: <strong className="text-indigo-600 dark:text-indigo-400">{STANDARD_EXAM_SETS_15.find(s => s.id === selectedSetId)?.badge}</strong>
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {STANDARD_EXAM_SETS_15.map((set, idx) => {
+                const isCurrent = set.id === selectedSetId;
+                return (
+                  <button
+                    key={set.id}
+                    id={`btn-quickdrill-set-${set.id}`}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSetId(set.id);
+                      initDrill(set.id);
+                    }}
+                    className={`p-2.5 rounded-xl font-bold transition-all text-left flex flex-col justify-between border-2 active:scale-98 cursor-pointer ${
+                      isCurrent
+                        ? "bg-indigo-600 text-white border-indigo-600 shadow-sm ring-2 ring-indigo-300 dark:ring-indigo-800"
+                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-[11px] mb-1">
+                      <span className={`font-black px-1.5 py-0.5 rounded text-[10px] ${
+                        isCurrent ? "bg-white/20 text-white" : "bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300"
+                      }`}>
+                        {set.badge}
+                      </span>
+                      <span className="opacity-80 text-[10px]">ชุดที่ {idx + 1}</span>
+                    </div>
+                    <div className="text-xs font-bold truncate leading-tight">
+                      {set.title}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 

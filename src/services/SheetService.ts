@@ -62,22 +62,37 @@ const STORAGE_KEY_WEBHOOK = "exponent_master_sheet_webhook_url";
 const STORAGE_KEY_STUDENT = "exponent_master_current_student";
 const STORAGE_KEY_LOGS = "exponent_master_sheet_logs";
 
-// Default or fallback URL (can also be configured via .env: VITE_APPS_SCRIPT_URL)
+// Webhook URL ถาวรสำหรับส่งคะแนนเข้า Google Sheets ของ KruNiracha
+export const PERMANENT_WEBHOOK_URL =
+  "https://script.google.com/macros/s/AKfycbwaX-s_-e_YB2K6qo1x2Iufjv2PXsNXdtnGYU1cbMwstRD6YuaMNPGDyQuBqPTzIy-a/exec";
+
+// Default or fallback URL (can also be overridden via .env: VITE_APPS_SCRIPT_URL)
 const DEFAULT_WEBHOOK_URL =
-  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_APPS_SCRIPT_URL) || "";
+  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_APPS_SCRIPT_URL) ||
+  PERMANENT_WEBHOOK_URL;
 
 class SheetService {
   private webhookUrl: string = "";
 
   constructor() {
     this.webhookUrl = this.loadWebhookUrl();
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(STORAGE_KEY_WEBHOOK);
+      // หากยังไม่เคยบันทึก หรือค่าว่าง ให้บันทึก URL ถาวรลงใน LocalStorage
+      if (!saved || !saved.trim().startsWith("http")) {
+        localStorage.setItem(STORAGE_KEY_WEBHOOK, DEFAULT_WEBHOOK_URL);
+      }
+    }
   }
 
   /**
    * ดึง Webhook URL ปัจจุบันที่บันทึกไว้
    */
   public getWebhookUrl(): string {
-    return this.webhookUrl || this.loadWebhookUrl();
+    if (!this.webhookUrl || !this.webhookUrl.startsWith("http")) {
+      this.webhookUrl = this.loadWebhookUrl();
+    }
+    return this.webhookUrl || DEFAULT_WEBHOOK_URL;
   }
 
   /**
@@ -122,6 +137,15 @@ class SheetService {
       return JSON.parse(raw) as StudentProfile;
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * ออกจากระบบ / ลบข้อมูลโปรไฟล์นักเรียนที่บันทึกไว้ในเครื่อง
+   */
+  public clearStudentProfile(): void {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(STORAGE_KEY_STUDENT);
     }
   }
 
@@ -356,7 +380,7 @@ class SheetService {
   private loadWebhookUrl(): string {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(STORAGE_KEY_WEBHOOK);
-      if (saved) return saved;
+      if (saved && saved.trim().startsWith("http")) return saved.trim();
     }
     return DEFAULT_WEBHOOK_URL;
   }

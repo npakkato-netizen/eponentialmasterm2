@@ -404,49 +404,66 @@ export const QuizMode: React.FC<QuizModeProps> = ({
 
         {/* If 15-question exam mode is selected, show 4 standard sets */}
         {activeMode === "exam-sets-15" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
-            {STANDARD_EXAM_SETS_15.map((set, idx) => {
-              const isSelected = activeSet15Id === set.id;
-              return (
-                <div
-                  key={set.id}
-                  onClick={() => setActiveSet15Id(set.id)}
-                  className={`p-4 rounded-2xl cursor-pointer transition-all border-2 flex flex-col justify-between ${
-                    isSelected
-                      ? "bg-white text-slate-900 border-amber-400 shadow-lg scale-102 ring-2 ring-amber-400"
-                      : "bg-white/10 hover:bg-white/15 text-white border-white/20"
-                  }`}
-                >
-                  <div className="space-y-1.5 mb-3">
-                    <div className="flex items-center justify-between">
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                        isSelected ? "bg-indigo-100 text-indigo-700" : "bg-white/20 text-white"
-                      }`}>
-                        {set.badge}
-                      </span>
-                      <span className="text-[11px] font-bold opacity-80">
-                        ชุดที่ {idx + 1}
-                      </span>
+          <div className="space-y-2 pt-2">
+            <div className="text-xs font-bold text-indigo-200 flex items-center justify-between">
+              <span>ชุดข้อสอบมาตรฐาน 15 ข้อ (เลือกทำชุดใดก็ได้):</span>
+              <span className="text-amber-300 font-extrabold">
+                กำลังทำ: {currentExamSet15.badge}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {STANDARD_EXAM_SETS_15.map((set, idx) => {
+                const isSelected = activeSet15Id === set.id;
+                return (
+                  <div
+                    key={set.id}
+                    id={`card-exam-set-15-${set.id}`}
+                    onClick={() => setActiveSet15Id(set.id)}
+                    className={`p-4 rounded-2xl cursor-pointer transition-all border-2 flex flex-col justify-between active:scale-98 ${
+                      isSelected
+                        ? "bg-white text-slate-900 border-amber-400 shadow-lg scale-102 ring-2 ring-amber-400"
+                        : "bg-white/10 hover:bg-white/15 text-white border-white/20"
+                    }`}
+                  >
+                    <div className="space-y-1.5 mb-3">
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                          isSelected ? "bg-indigo-100 text-indigo-700" : "bg-white/20 text-white"
+                        }`}>
+                          {set.badge}
+                        </span>
+                        <span className="text-[11px] font-bold opacity-80">
+                          ชุดที่ {idx + 1}
+                        </span>
+                      </div>
+                      <h4 className="font-extrabold text-xs sm:text-sm leading-snug">
+                        {set.title}
+                      </h4>
+                      <p className={`text-[11px] line-clamp-2 ${isSelected ? "text-slate-600" : "text-indigo-200"}`}>
+                        {set.subtitle}
+                      </p>
                     </div>
-                    <h4 className="font-extrabold text-xs sm:text-sm leading-snug">
-                      {set.title}
-                    </h4>
-                    <p className={`text-[11px] line-clamp-2 ${isSelected ? "text-slate-600" : "text-indigo-200"}`}>
-                      {set.subtitle}
-                    </p>
-                  </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-current/10 text-[11px] font-bold">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" /> 15 ข้อ ({set.timeLimitMinutes} นาที)
-                    </span>
-                    <span className="text-amber-500 font-black">
-                      +{set.xpReward} XP
-                    </span>
+                    <div>
+                      <div className="flex items-center justify-between pt-2 border-t border-current/10 text-[11px] font-bold">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5" /> 15 ข้อ ({set.timeLimitMinutes} นาที)
+                        </span>
+                        <span className={isSelected ? "text-amber-600 font-black" : "text-amber-300 font-black"}>
+                          +{set.xpReward} XP
+                        </span>
+                      </div>
+
+                      {isSelected && (
+                        <div className="mt-2 text-center py-1 bg-amber-400 text-slate-950 rounded-lg text-[10px] font-black flex items-center justify-center gap-1">
+                          <Check className="w-3 h-3 stroke-[3]" /> กำลังเลือกชุดนี้
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
@@ -456,68 +473,102 @@ export const QuizMode: React.FC<QuizModeProps> = ({
       {/* ========================================================================= */}
       {activeMode === "rule-practice" && (
         <div className="bg-white dark:bg-[#1E293B] rounded-3xl border-2 border-[#F1F5F9] dark:border-slate-800 p-4 sm:p-6 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-[#6366F1] dark:text-indigo-400">
-                  <Compass className="w-5 h-5" />
-                </span>
-                <div>
-                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
-                    เลือกฝึกตามรายสมบัติ (Rule Question Sets)
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    เลือกเจาะลึกเฉพาะสมบัติที่ต้องการเพื่อสะสม XP และแก้จุดอ่อน
-                  </p>
-                </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-[#6366F1] dark:text-indigo-400">
+                <Compass className="w-5 h-5" />
+              </span>
+              <div>
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>เลือกชุดข้อสอบตามสมบัติ</span>
+                  <span className="text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300">
+                    {ruleSets.length} ชุด
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  คลิกเลือกชุดข้อสอบที่ต้องการฝึกฝนได้ทันที (เรียงหลายบรรทัด เห็นครบทุกชุด ไม่ต้องเลื่อนแนวนอน)
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl">
-                กำลังทำ: <span className="text-[#6366F1] dark:text-indigo-300 font-extrabold">{currentRuleInfo.name}</span>
-              </span>
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
+              <div className="text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                <span>กำลังฝึก:</span>
+                <span className="text-[#6366F1] dark:text-indigo-300 font-extrabold truncate max-w-[150px] sm:max-w-none">
+                  {currentRuleInfo.name}
+                </span>
+              </div>
 
               <button
+                type="button"
+                id="btn-toggle-rule-grid"
                 onClick={() => setShowRuleSelectorGrid(!showRuleSelectorGrid)}
-                className="text-xs font-bold px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/60 text-[#6366F1] dark:text-indigo-300 hover:bg-indigo-100 rounded-xl transition-all flex items-center gap-1.5 border border-indigo-100 dark:border-indigo-900/50"
+                className="text-xs font-bold px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/60 text-[#6366F1] dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 rounded-xl transition-all flex items-center gap-1.5 border border-indigo-100 dark:border-indigo-900/50 cursor-pointer"
               >
                 <Layers className="w-3.5 h-3.5" />
-                <span>{showRuleSelectorGrid ? "ย่อเมนูชุดข้อสอบ" : "ดูทุกชุดข้อสอบ (8 หมวด)"}</span>
+                <span>{showRuleSelectorGrid ? "ซ่อนสูตรคณิต" : "แสดงสูตร & รายละเอียด"}</span>
               </button>
             </div>
           </div>
 
-          {/* Scrollable Quick Rule Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none pt-1">
-            {ruleSets.map((set) => {
-              const isSelected = topicFilter === set.id;
-              return (
-                <button
-                  key={set.id}
-                  onClick={() => {
-                    setTopicFilter(set.id);
-                    setShowRuleSelectorGrid(false);
-                  }}
-                  className={`flex-shrink-0 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 border-2 ${
-                    isSelected
-                      ? "bg-[#6366F1] text-white border-[#6366F1] shadow-md shadow-indigo-500/20"
-                      : "bg-[#F8FAFC] dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-700/60 hover:border-indigo-300 dark:hover:border-slate-600"
-                  }`}
-                >
-                  <span>{set.name}</span>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+          {/* MULTI-LINE ROW TABS (เรียงหลายบรรทัด ใช้งานง่าย) */}
+          <div className="space-y-1.5">
+            <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 flex items-center justify-between">
+              <span>ชุดข้อสอบทั้งหมด (คลิกเพื่อเลือกชุด):</span>
+              <span className="text-indigo-600 dark:text-indigo-400 font-semibold">{currentRuleInfo.count} ข้อในชุดนี้</span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 pt-1">
+              {ruleSets.map((set) => {
+                const isSelected = topicFilter === set.id;
+                return (
+                  <button
+                    key={set.id}
+                    id={`btn-rule-set-${set.id}`}
+                    type="button"
+                    onClick={() => {
+                      setTopicFilter(set.id);
+                    }}
+                    className={`px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 border-2 text-left active:scale-98 cursor-pointer ${
                       isSelected
-                        ? "bg-white/20 text-white"
-                        : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                        ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white border-indigo-600 shadow-md shadow-indigo-500/25 ring-2 ring-indigo-400 dark:ring-indigo-500 scale-[1.02]"
+                        : "bg-[#F8FAFC] dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border-slate-200/80 dark:border-slate-700/70 hover:border-indigo-300 dark:hover:border-indigo-600 hover:bg-indigo-50/50 dark:hover:bg-slate-800"
                     }`}
                   >
-                    {set.count} ข้อ
-                  </span>
-                </button>
-              );
-            })}
+                    <span className="flex items-center gap-1.5">
+                      {isSelected ? (
+                        <CheckCircle2 className="w-4 h-4 text-amber-300 shrink-0" />
+                      ) : (
+                        <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0" />
+                      )}
+                      <span>{set.name}</span>
+                    </span>
+
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+                        isSelected
+                          ? "bg-white/25 text-white"
+                          : "bg-slate-200/90 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                      }`}
+                    >
+                      {set.count} ข้อ
+                    </span>
+
+                    {set.grade && (
+                      <span
+                        className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded shrink-0 ${
+                          isSelected
+                            ? "bg-indigo-900/40 text-indigo-100"
+                            : "bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400"
+                        }`}
+                      >
+                        {set.grade}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Expandable Grid of all Rule Sets */}
@@ -535,7 +586,6 @@ export const QuizMode: React.FC<QuizModeProps> = ({
                     key={set.id}
                     onClick={() => {
                       setTopicFilter(set.id);
-                      setShowRuleSelectorGrid(false);
                     }}
                     className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
                       isSelected
@@ -557,7 +607,7 @@ export const QuizMode: React.FC<QuizModeProps> = ({
                     <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
                       <span>คลังข้อสอบ: {set.count} ข้อ</span>
                       <span className="text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1">
-                        เลือกชุดนี้ <ChevronRight className="w-3 h-3" />
+                        {isSelected ? "✓ เลือกชุดนี้แล้ว" : "เลือกชุดนี้"} <ChevronRight className="w-3 h-3" />
                       </span>
                     </div>
                   </div>

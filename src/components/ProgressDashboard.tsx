@@ -17,7 +17,8 @@ import {
   User,
   FileSpreadsheet,
   Edit3,
-  Share2
+  Share2,
+  LogOut
 } from "lucide-react";
 import { motion } from "motion/react";
 import { StudentProfile } from "../services/SheetService";
@@ -33,6 +34,7 @@ interface ProgressDashboardProps {
   onOpenQuests: () => void;
   studentProfile?: StudentProfile | null;
   onEditProfile?: () => void;
+  onLogout?: () => void;
 }
 
 export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
@@ -40,6 +42,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
   onOpenQuests,
   studentProfile,
   onEditProfile,
+  onLogout,
 }) => {
   const currentXPInLevel = stats.xp % 200;
   const xpForNextLevel = 200;
@@ -124,6 +127,18 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
                   >
                     <Edit3 className="w-3 h-3" />
                     <span>แก้ไขโปรไฟล์</span>
+                  </button>
+                )}
+                {onLogout && (
+                  <button
+                    type="button"
+                    id="btn-logout-progress"
+                    onClick={onLogout}
+                    className="text-[11px] text-rose-200 hover:text-white bg-rose-500/30 hover:bg-rose-500/50 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 font-semibold ml-1 transition-colors backdrop-blur-sm"
+                    title="ออกจากระบบ / สลับบัญชีผู้เรียน"
+                  >
+                    <LogOut className="w-3 h-3" />
+                    <span>ออกจากระบบ</span>
                   </button>
                 )}
               </div>

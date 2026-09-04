@@ -19,6 +19,7 @@ import { QuickDrillModal } from "./components/QuickDrillModal";
 import { FocusedMasteryMode } from "./components/FocusedMasteryMode";
 import { MathView } from "./components/MathView";
 import { StudentRegistrationModal } from "./components/StudentRegistrationModal";
+import { LogoutConfirmModal } from "./components/LogoutConfirmModal";
 import sheetService, { StudentProfile } from "./services/SheetService";
 import {
   BookOpen,
@@ -45,7 +46,8 @@ import {
   Timer,
   Layers,
   Compass,
-  ArrowRight
+  ArrowRight,
+  LogOut
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -119,6 +121,20 @@ export default function App() {
     const profile = sheetService.getStudentProfile();
     return !profile || !profile.name || profile.name.trim().length === 0;
   });
+
+  // Logout state
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState<boolean>(false);
+
+  const handleRequestLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const handleConfirmLogout = () => {
+    sheetService.clearStudentProfile();
+    setStudentProfile(null);
+    setShowLogoutConfirm(false);
+    setShowRegistrationModal(true);
+  };
 
   const handleSaveStudentProfile = (profile: StudentProfile) => {
     setStudentProfile(profile);
@@ -375,14 +391,26 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              <button
-                id="btn-edit-student-sidebar"
-                onClick={() => setShowRegistrationModal(true)}
-                className="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-white dark:hover:bg-slate-700 transition-colors shrink-0"
-                title="แก้ไขข้อมูลนักเรียน"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-              </button>
+              <div className="flex items-center gap-0.5 shrink-0">
+                <button
+                  id="btn-edit-student-sidebar"
+                  onClick={() => setShowRegistrationModal(true)}
+                  className="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-white dark:hover:bg-slate-700 transition-colors shrink-0"
+                  title="แก้ไขข้อมูลนักเรียน"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                </button>
+                {studentProfile && (
+                  <button
+                    id="btn-logout-sidebar"
+                    onClick={handleRequestLogout}
+                    className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors shrink-0"
+                    title="ออกจากระบบ / สลับบัญชีผู้เรียน"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
             <div className="text-[11px] text-[#64748B] dark:text-slate-400 flex items-center justify-between pt-1 border-t border-slate-200/50 dark:border-slate-700/40 font-medium">
               <span className="truncate">
@@ -458,6 +486,20 @@ export default function App() {
                   </span>
                 </div>
               </button>
+
+              {/* Logout Button in Header */}
+              {studentProfile && (
+                <button
+                  type="button"
+                  id="btn-logout-header"
+                  onClick={handleRequestLogout}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-900/60 hover:bg-rose-50/70 dark:hover:bg-rose-950/40 text-xs font-bold shadow-xs active:scale-95 transition-all"
+                  title="ออกจากระบบ / สลับบัญชีผู้เรียน"
+                >
+                  <LogOut className="w-3.5 h-3.5 text-rose-500" />
+                  <span className="hidden xl:inline">ออกจากระบบ</span>
+                </button>
+              )}
 
               {/* Focused Mastery CTA Header */}
               <button
@@ -539,15 +581,32 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      setShowRegistrationModal(true);
-                    }}
-                    className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 shrink-0 shadow-2xs hover:bg-indigo-50"
-                  >
-                    แก้ไขข้อมูล
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setShowRegistrationModal(true);
+                      }}
+                      className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 shadow-2xs hover:bg-indigo-50"
+                    >
+                      แก้ไข
+                    </button>
+                    {studentProfile && (
+                      <button
+                        type="button"
+                        id="btn-logout-mobile"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          handleRequestLogout();
+                        }}
+                        className="px-2.5 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-[11px] font-bold text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 shadow-2xs hover:bg-rose-100 flex items-center gap-1"
+                        title="ออกจากระบบ / สลับบัญชีผู้เรียน"
+                      >
+                        <LogOut className="w-3 h-3" />
+                        <span>ออก</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {navSections.map((section, sIdx) => (
                   <div key={sIdx} className="space-y-1">
@@ -1013,6 +1072,7 @@ export default function App() {
                     onOpenQuests={() => setActiveTab("weekly")}
                     studentProfile={studentProfile}
                     onEditProfile={() => setShowRegistrationModal(true)}
+                    onLogout={handleRequestLogout}
                   />
                 </motion.div>
               )}
@@ -1099,6 +1159,18 @@ export default function App() {
           currentProfile={studentProfile}
           onSave={handleSaveStudentProfile}
           onClose={() => setShowRegistrationModal(false)}
+          onLogout={() => {
+            setShowRegistrationModal(false);
+            handleRequestLogout();
+          }}
+        />
+
+        {/* Logout Confirmation Modal */}
+        <LogoutConfirmModal
+          isOpen={showLogoutConfirm}
+          onClose={() => setShowLogoutConfirm(false)}
+          onConfirm={handleConfirmLogout}
+          currentProfile={studentProfile}
         />
       </div>
     </div>

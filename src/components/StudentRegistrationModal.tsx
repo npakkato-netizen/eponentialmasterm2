@@ -1,22 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import {
   User,
   GraduationCap,
   Hash,
   School,
-  Sparkles,
   CheckCircle2,
   AlertCircle,
   Loader2,
   FileSpreadsheet,
-  Settings,
   ChevronDown,
-  ChevronUp,
   X,
   ArrowRight,
   ShieldCheck,
-  BookOpen
+  LogOut
 } from "lucide-react";
 import sheetService, { StudentProfile } from "../services/SheetService";
 
@@ -26,6 +23,7 @@ interface StudentRegistrationModalProps {
   currentProfile: StudentProfile | null;
   onSave: (profile: StudentProfile) => void;
   onClose?: () => void;
+  onLogout?: () => void;
 }
 
 const CLASS_OPTIONS = [
@@ -47,6 +45,7 @@ export const StudentRegistrationModal: React.FC<StudentRegistrationModalProps> =
   currentProfile,
   onSave,
   onClose,
+  onLogout,
 }) => {
   const [name, setName] = useState<string>("");
   const [grade, setGrade] = useState<string>("ม.1/1");
@@ -54,11 +53,6 @@ export const StudentRegistrationModal: React.FC<StudentRegistrationModalProps> =
   const [isCustomGrade, setIsCustomGrade] = useState<boolean>(false);
   const [studentNo, setStudentNo] = useState<string>("");
   const [school, setSchool] = useState<string>("โรงเรียนมัธยมศึกษา");
-
-  // Google Sheets Webhook Configuration state
-  const [showWebhookSettings, setShowWebhookSettings] = useState<boolean>(false);
-  const [webhookUrl, setWebhookUrl] = useState<string>("");
-  const [webhookStatus, setWebhookStatus] = useState<string>("");
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -96,19 +90,12 @@ export const StudentRegistrationModal: React.FC<StudentRegistrationModalProps> =
         setSchool("โรงเรียนมัธยมศึกษา");
       }
 
-      setWebhookUrl(sheetService.getWebhookUrl());
       setErrorMessage(null);
       setSuccessInfo(null);
     }
   }, [isOpen, currentProfile]);
 
   if (!isOpen) return null;
-
-  const handleSaveWebhook = () => {
-    sheetService.setWebhookUrl(webhookUrl.trim());
-    setWebhookStatus("บันทึกการตั้งค่า Webhook เรียบร้อย");
-    setTimeout(() => setWebhookStatus(""), 3000);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,10 +132,10 @@ export const StudentRegistrationModal: React.FC<StudentRegistrationModalProps> =
     };
 
     try {
-      // 1. บันทึกลง localStorage ทันทีผ่าน sheetService เพื่อความชัวร์
+      // 1. บันทึกลง localStorage ทันทีผ่าน sheetService
       sheetService.saveStudentProfile(profileData);
 
-      // 2. ส่งข้อมูลการลงทะเบียน / การเข้าเรียนไปยัง Google Sheets
+      // 2. ส่งข้อมูลการลงทะเบียน / การเข้าเรียนไปยัง Google Sheets ผ่าน Webhook อัตโนมัติ
       const attendanceResult = await sheetService.submitAttendance({
         name: trimmedName,
         grade: finalGrade,
@@ -157,25 +144,13 @@ export const StudentRegistrationModal: React.FC<StudentRegistrationModalProps> =
         note: currentProfile ? "อัปเดตข้อมูลผู้เรียน" : "ลงทะเบียนเข้าใช้งานระบบใหม่",
       });
 
-      let syncStatus: "synced" | "saved_local" | "failed" = "saved_local";
-
-      if (sheetService.isConfigured()) {
-        if (attendanceResult.success) {
-          syncStatus = "synced";
-        } else {
-          syncStatus = "failed";
-        }
-      } else {
-        syncStatus = "saved_local";
-      }
+      const syncStatus = attendanceResult.success ? "synced" : "saved_local";
 
       setSuccessInfo({
         message:
           syncStatus === "synced"
-            ? "บันทึกและซิงค์ข้อมูลไปยัง Google Sheets สำเร็จ!"
-            : syncStatus === "saved_local"
-            ? "บันทึกข้อมูลในเครื่องเรียบร้อย (พร้อมเริ่มเรียนรู้)"
-            : "บันทึกข้อมูลในเครื่องแล้ว (ไม่สามารถส่งไปยัง Google Sheets ได้ ณ ขณะนี้)",
+            ? "บันทึกและเชื่อมต่อ Google Sheets สำเร็จ! พร้อมเริ่มทำข้อสอบ"
+            : "บันทึกข้อมูลเรียบร้อย พร้อมเริ่มทำข้อสอบและสะสมคะแนน",
         sheetSyncStatus: syncStatus,
       });
 
@@ -184,7 +159,7 @@ export const StudentRegistrationModal: React.FC<StudentRegistrationModalProps> =
         setIsSubmitting(false);
         onSave(profileData);
         if (onClose) onClose();
-      }, 1000);
+      }, 900);
     } catch (err: any) {
       console.error("Failed to submit student registration:", err);
       // Fallback: บันทึกข้อมูลลง local เสมอเพื่อให้นักเรียนไม่ถูกขัดขวางการเรียน
@@ -194,8 +169,6 @@ export const StudentRegistrationModal: React.FC<StudentRegistrationModalProps> =
       if (onClose) onClose();
     }
   };
-
-  const isWebhookReady = sheetService.isConfigured();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/75 backdrop-blur-md overflow-y-auto">
@@ -237,77 +210,25 @@ export const StudentRegistrationModal: React.FC<StudentRegistrationModalProps> =
             </p>
           </div>
 
-          {/* Sync Status Badge */}
-          <div className="mb-5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <div className="text-left">
-                <span className="font-bold text-slate-700 dark:text-slate-200 block">
+          {/* Automatic Google Sheets Connection Badge (ซ่อนหน้าต่างตั้งค่า เชื่อมต่ออัตโนมัติ) */}
+          <div className="mb-5 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-3 text-xs">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+              <FileSpreadsheet className="w-4 h-4" />
+            </div>
+            <div className="text-left flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="font-bold text-emerald-950 dark:text-emerald-200">
                   ระบบส่งคะแนน Google Sheets:
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {isWebhookReady
-                    ? "🟢 เชื่อมต่อ Webhook พร้อมส่งข้อมูลอัตโนมัติ"
-                    : "🟡 บันทึกในเครื่อง (กรอก Webhook เพิ่มเติมได้)"}
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300">
+                  🟢 เชื่อมต่ออัตโนมัติ
                 </span>
               </div>
+              <p className="text-[11px] text-emerald-700/90 dark:text-emerald-400/90 truncate">
+                บันทึกการเข้าเรียนและคะแนนส่งตรงถึงครูผู้สอนทันที
+              </p>
             </div>
-
-            <button
-              type="button"
-              id="btn-toggle-webhook-settings"
-              onClick={() => setShowWebhookSettings(!showWebhookSettings)}
-              className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 shrink-0 px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/50"
-            >
-              <Settings className="w-3.5 h-3.5" />
-              <span>{showWebhookSettings ? "ซ่อนการตั้งค่า" : "ตั้งค่าชีต"}</span>
-              {showWebhookSettings ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            </button>
           </div>
-
-          {/* Webhook Configuration Drawer */}
-          <AnimatePresence>
-            {showWebhookSettings && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-5 p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/50 text-xs space-y-2 overflow-hidden"
-              >
-                <div className="font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
-                  <FileSpreadsheet className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  <span>Google Apps Script Web App URL</span>
-                </div>
-                <p className="text-[11px] text-indigo-700 dark:text-indigo-300">
-                  ใส่ URL ของ Google Apps Script ที่ Deploy เป็น Web App (สิทธิ์ Anyone) เพื่อรับคะแนนนักเรียน
-                </p>
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    id="input-webhook-url"
-                    value={webhookUrl}
-                    onChange={(e) => setWebhookUrl(e.target.value)}
-                    placeholder="https://script.google.com/macros/s/.../exec"
-                    className="flex-1 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    id="btn-save-webhook"
-                    onClick={handleSaveWebhook}
-                    className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shrink-0 shadow-xs"
-                  >
-                    บันทึก URL
-                  </button>
-                </div>
-                {webhookStatus && (
-                  <p className="text-emerald-600 dark:text-emerald-400 font-semibold text-[11px] flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    {webhookStatus}
-                  </p>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -477,7 +398,7 @@ export const StudentRegistrationModal: React.FC<StudentRegistrationModalProps> =
             )}
 
             {/* Submit Button */}
-            <div className="pt-2">
+            <div className="pt-2 space-y-2">
               <button
                 type="submit"
                 id="btn-submit-registration"
@@ -496,6 +417,18 @@ export const StudentRegistrationModal: React.FC<StudentRegistrationModalProps> =
                   </>
                 )}
               </button>
+
+              {currentProfile && onLogout && (
+                <button
+                  type="button"
+                  id="btn-logout-registration-modal"
+                  onClick={onLogout}
+                  className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>ออกจากระบบ / สลับบัญชีผู้เรียนคนอื่น</span>
+                </button>
+              )}
             </div>
           </form>
 
